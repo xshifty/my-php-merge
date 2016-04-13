@@ -1,0 +1,55 @@
+#!/usr/bin/env php
+<?php
+ini_set('register_argc_argv', 1);
+
+$autoloads = [
+    __DIR__ . '/../../autoload.php',
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/vendor/autoload.php'
+];
+
+foreach ($autoloads as $file) {
+    if (file_exists($file)) {
+        define('MPMERGE_COMPOSER_INSTALL', $file);
+        break;
+    }
+}
+
+unset($file);
+
+if (!defined('MPMERGE_COMPOSER_INSTALL')) {
+    fwrite(STDERR,
+        'You need to set up the project dependencies using the following commands:' . PHP_EOL .
+        'wget http://getcomposer.org/composer.phar' . PHP_EOL .
+        'php composer.phar install' . PHP_EOL
+    );
+    die(1);
+}
+
+include MPMERGE_COMPOSER_INSTALL;
+
+$input = $argv;
+
+$warningStyle = new \Symfony\Component\Console\Formatter\OutputFormatterStyle('yellow', null, ['blink', 'bold']);
+$output = new \Symfony\Component\Console\Output\ConsoleOutput();
+$output->getFormatter()->setStyle('warning', $warningStyle);
+
+try {
+    $options = getopt('c:');
+    $mergeFile = 'Mergefile.json';
+
+    if (!empty($options['c'])) {
+        $mergeFile = $options['c'];
+    }
+
+    $console = new \Xshifty\MyPhpMerge\Console(
+        $mergeFile,
+        $input,
+        $output
+    );
+    $console->run();
+} catch (\RuntimeException $re) {
+    $output->writeln('<warning>WARN: ' . $re->getMessage() . '</warning>');
+} catch (\Exception $e) {
+    $output->writeln('<error>ERR: ' . $e->getMessage() . '</error>');
+}
