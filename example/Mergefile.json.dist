@@ -6,12 +6,12 @@
     "host": "localhost"
   },
   "merge": {
-    "group_schema": "db_group",
-    "source_schemas": ["db_test1", "db_teste2", "db_teste3"],
-    "template_schema": "db_template",
-    "template_schema_file": "./db_template.sql"
+    "group-schema": "db_group",
+    "source-schemas": ["db_test1", "db_teste2", "db_teste3"],
+    "template-schema": "db_template",
+    "template-schema-file": "./db_template.sql"
   },
   "path": {
-    "model_path": "./model"
+    "mergeable-class": "./mergeable"
   }
 }
