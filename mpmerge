@@ -33,13 +33,7 @@ use \Xshifty\MyPhpMerge\Output as Out;
 Out::setup();
 
 try {
-    $options = getopt('c:');
     $mergeFile = 'Mergefile.json';
-
-    if (!empty($options['c'])) {
-        $mergeFile = $options['c'];
-    }
-
     $console = new \Xshifty\MyPhpMerge\Tools\Console(
         $mergeFile,
         $argv
