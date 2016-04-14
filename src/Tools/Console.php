@@ -217,6 +217,7 @@ final class Console
             $accumulateAction->execute();
             $moveAction->execute();
         }
+
         $this->groupConnection->execute(sprintf(
             'DROP TABLE IF EXISTS myphpmerge_%s',
             $rule->table
