@@ -28,11 +28,9 @@ if (!defined('MPMERGE_COMPOSER_INSTALL')) {
 
 include MPMERGE_COMPOSER_INSTALL;
 
-$input = $argv;
+use \Xshifty\MyPhpMerge\Output as Out;
 
-$warningStyle = new \Symfony\Component\Console\Formatter\OutputFormatterStyle('yellow', null, ['blink', 'bold']);
-$output = new \Symfony\Component\Console\Output\ConsoleOutput();
-$output->getFormatter()->setStyle('warning', $warningStyle);
+Out::setup();
 
 try {
     $options = getopt('c:');
@@ -42,14 +40,13 @@ try {
         $mergeFile = $options['c'];
     }
 
-    $console = new \Xshifty\MyPhpMerge\Console(
+    $console = new \Xshifty\MyPhpMerge\Tools\Console(
         $mergeFile,
-        $input,
-        $output
+        $argv
     );
     $console->run();
 } catch (\RuntimeException $re) {
-    $output->writeln('<warning>WARN: ' . $re->getMessage() . '</warning>');
+    Out::writeln('<warning>WARN: ' . $re->getMessage() . '</warning>');
 } catch (\Exception $e) {
-    $output->writeln('<error>ERR: ' . $e->getMessage() . '</error>');
+    Out::writeln('<error>ERR: ' . $e->getMessage() . '</error>');
 }
