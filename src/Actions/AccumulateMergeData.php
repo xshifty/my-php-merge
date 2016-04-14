@@ -40,7 +40,13 @@ final class AccumulateMergeData implements Action
         }
 
         foreach ($data as $row) {
-            $values = array_map([$this->groupConnection, 'quote'], $row);
+            $values = array_map(\Closure::bind(function ($value) {
+                if (is_null($value)) {
+                    return 'NULL';
+                }
+                return $this->groupConnection->quote($value);
+            }, $this, $this), $row);
+
             $sql = sprintf(
                 'INSERT INTO myphpmerge_%1$s (%2$s) VALUES (%3$s)',
                 $this->mergeRule->table,
