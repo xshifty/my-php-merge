@@ -1,17 +1,47 @@
 {
-  "connection": {
-    "user": "root",
-    "password": "",
-    "port": 3306,
-    "host": "localhost"
-  },
-  "merge": {
-    "group_schema": "db_group",
-    "source_schemas": ["db_test1", "db_teste2", "db_teste3"],
-    "template_schema": "db_template",
-    "template_schema_file": "./db_template.sql"
-  },
-  "path": {
-    "model_path": "./model"
-  }
+    "rules-namespace": "\\My\\Merge\\Rules",
+    "schemas": {
+        "group": {
+            "user": "root",
+            "password": "",
+            "port": 3306,
+            "host": "localhost",
+            "schema": "db_group"
+        },
+        "source": [
+            {
+                "user": "root",
+                "password": "",
+                "port": 3306,
+                "host": "localhost",
+                "schema": "db_teste1",
+                "readonly": true
+            }, {
+                "user": "root",
+                "password": "",
+                "port": 3306,
+                "host": "localhost",
+                "schema": "db_teste2",
+                "readonly": true
+            }, {
+                "user": "root",
+                "password": "",
+                "port": 3306,
+                "host": "localhost",
+                "schema": "db_teste3",
+                "readonly": true
+            }
+        ],
+        "template": {
+            "user": "root",
+            "password": "",
+            "port": 3306,
+            "host": "localhost",
+            "schema": "db_template",
+            "readonly": true
+        }
+    },
+    "path": {
+        "merge-rules": "./rules"
+    }
 }
