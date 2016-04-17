@@ -13,4 +13,13 @@ final class RuleContainer extends \SplMaxHeap
 
         return $firstRule->priority - $secondRule->priority;
     }
+
+    public function getRule($tableName)
+    {
+        foreach ($this as $rule) {
+            if ($rule->table == $tableName) {
+                return $rule;
+            }
+        }
+    }
 }

@@ -23,6 +23,7 @@ final class AccumulateMergeData implements Action
 
     public function execute()
     {
+        echo '.';
         $columnsDescription = $this->mergeRule->getTableColumns();
         $columnsName = array_map(function ($row) {
             return $row['Field'];
@@ -47,14 +48,19 @@ final class AccumulateMergeData implements Action
                 return $this->groupConnection->quote($value);
             }, $this, $this), $row);
 
-            $sql = sprintf(
-                'INSERT INTO myphpmerge_%1$s (%2$s) VALUES (%3$s)',
+            $this->groupConnection->execute(sprintf(
+                'INSERT INTO myphpmerge_%1$s (myphpmerge_schema, %2$s) VALUES (%4$s, %3$s)',
                 $this->mergeRule->table,
                 join(", ", array_keys($row)),
-                join(', ', $values)
-            );
+                join(', ', $values),
+                "'{$this->sourceConnection->getConfig()->schema}'"
+            ));
 
-            $this->groupConnection->execute($sql);
+            $this->groupConnection->execute(sprintf(
+                'UPDATE myphpmerge_%1$s tbl SET tbl.myphpmerge__key__ = tbl.myphpmerge_%2$s',
+                $this->mergeRule->table,
+                $this->mergeRule->primaryKey
+            ));
         }
     }
 }

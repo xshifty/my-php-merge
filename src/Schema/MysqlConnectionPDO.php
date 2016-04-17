@@ -6,7 +6,7 @@ final class MysqlConnectionPDO implements MysqlConnection
     private $pdo;
     private $config;
 
-    public function __construct(array $config, $user, $password = null, $createSchema = false)
+    public function __construct(array $config, $createSchema = false)
     {
         if (empty($config['schema'])) {
             throw new \RuntimeException('Your must define a schema for MysqlConnectionPDO');
@@ -23,14 +23,13 @@ final class MysqlConnectionPDO implements MysqlConnection
             $config['port']
         );
 
+        $user = $config['user'];
+        $password = !empty($config['password']) ? $config['password'] : null;
         $this->pdo = new \PDO($dsn, $user, $password);
-        $this->pdo->setAttribute(
-            \PDO::ATTR_ERRMODE,
-            \PDO::ERRMODE_EXCEPTION
-        );
+        $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
         if ($this->config['readonly']) {
-            $this->execute('SET @@read_only = 1;');
+            $this->execute('SET @read_only = 1;');
         }
 
         if (!$this->schemaExists() && (!$createSchema || $this->config['readonly'])) {

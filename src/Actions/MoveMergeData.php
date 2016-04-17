@@ -23,6 +23,8 @@ final class MoveMergeData implements Action
 
     public function execute()
     {
+        echo '.';
+
         $columnsDescription = $this->mergeRule->getTableColumns();
         $columnsName = array_map(function ($row) {
             return $row['Field'];
@@ -58,10 +60,14 @@ final class MoveMergeData implements Action
         });
 
         $accumColumnsName = array_map(function ($row) use ($columnsPrimaryKey, $accumPrimaryKey) {
+            if (in_array($row, ['myphpmerge_schema', 'myphpmerge__key__'])) {
+                return null;
+            }
+
             return $accumPrimaryKey['Field'] == $row
                 ? "{$accumPrimaryKey['Field']} AS '{$columnsPrimaryKey['Field']}'" : $row;
         }, $accumColumnsName);
-
+        $accumColumnsName = array_filter($accumColumnsName);
 
         $sql = sprintf(
             'REPLACE INTO %1$s (%2$s) (SELECT %3$s FROM myphpmerge_%1$s %4$s ORDER BY myphpmerge_%5$s)',
