@@ -70,13 +70,12 @@ final class MoveMergeData implements Action
         $accumColumnsName = array_filter($accumColumnsName);
 
         $sql = sprintf(
-            'REPLACE INTO %1$s (%2$s) (SELECT %3$s FROM myphpmerge_%1$s %4$s ORDER BY myphpmerge_%5$s)',
+            'REPLACE INTO %1$s (%2$s) (SELECT %3$s FROM myphpmerge_%1$s %4$s ORDER BY myphpmerge__key__)',
             $this->mergeRule->table,
             implode(', ', $columnsName),
             implode(', ', $accumColumnsName),
             !empty($this->mergeRule->unique) && count($this->mergeRule->unique)
-                ? 'GROUP BY ' . implode(', ', $this->mergeRule->unique) : '',
-            $columnsPrimaryKey['Field']
+                ? 'GROUP BY ' . implode(', ', $this->mergeRule->unique) : ''
         );
 
         $this->groupConnection->execute($sql);
