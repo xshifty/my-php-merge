@@ -7,6 +7,8 @@ abstract class MergeRule implements Rule
 {
     protected $templaceConnection;
     public $priority = 1;
+    public $foreignKeys = [];
+    public $unique = [];
 
     public function __construct(MysqlConnection $templateConnection)
     {

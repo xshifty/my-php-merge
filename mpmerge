@@ -34,10 +34,8 @@ Out::setup();
 
 try {
     $mergeFile = 'Mergefile.json';
-    $console = new \Xshifty\MyPhpMerge\Tools\Console(
-        $mergeFile,
-        $argv
-    );
+    $console = new \Xshifty\MyPhpMerge\Tools\Console($mergeFile, $argv);
+    $console->setup();
     $console->run();
 } catch (\RuntimeException $re) {
     Out::writeln('<warning>WARN: ' . $re->getMessage() . '</warning>');
