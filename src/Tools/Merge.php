@@ -42,19 +42,21 @@ final class Merge
         $this->foreachRule([$this, 'accumulateMergeData']);
         echo PHP_EOL;
 
-        echo "Updating primary/foreign keys";
-        $this->foreachRule([$this, 'updateKeys']);
+        echo "Updating primary keys";
+        $this->foreachRule([$this, 'updatePrimaryKeys']);
+        echo PHP_EOL;
+
+        echo "Updating foreign keys";
+        $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
 
         echo "Moving data";
         $this->foreachRule([$this, 'moveMergeData']);
         echo PHP_EOL;
 
-        /*
         echo "Cleaning residual data";
         $this->foreachRule([$this, 'cleanUp']);
         echo PHP_EOL;
-        */
 
         $this->groupConnection->execute('SET FOREIGN_KEY_CHECKS:=0');
     }
@@ -89,6 +91,7 @@ final class Merge
     private function foreachRule($callback)
     {
         $rules = $this->rules();
+
         foreach ($rules as $rule) {
             call_user_func($callback, $rule);
         }
@@ -122,21 +125,35 @@ final class Merge
             );
 
             $accumulateAction->execute();
-        }, $this, $this));
+        }, $this));
     }
 
-    private function updateKeys(Rule $rule)
+    private function updatePrimaryKeys(Rule $rule)
     {
         $this->foreachSourceConnection(\Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
-            $updateKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdateKeys(
+            $updatePrimaryKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdatePrimaryKeys(
                 $this->tableAssembler->assembly($rule),
                 $sourceConnection,
                 $this->groupConnection,
                 $this->ruleContainer
             );
 
-            $updateKeysAction->execute();
-        }, $this, $this));
+            $updatePrimaryKeysAction->execute();
+        }, $this));
+    }
+
+    private function UpdateForeignKeys(Rule $rule)
+    {
+        $this->foreachSourceConnection(\Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
+            $updateForeignKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdateForeignKeys(
+                $this->tableAssembler->assembly($rule),
+                $sourceConnection,
+                $this->groupConnection,
+                $this->ruleContainer
+            );
+
+            $updateForeignKeysAction->execute();
+        }, $this));
     }
 
     private function moveMergeData(Rule $rule)

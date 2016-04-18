@@ -6,7 +6,7 @@ abstract class ColumnBase
     protected $name;
     protected $table;
 
-    public function __construct(TableBase $table, $name)
+    public function __construct($table, $name)
     {
         $this->table = $table;
         $this->name = $name;
@@ -19,7 +19,7 @@ abstract class ColumnBase
 
     public function getFullName()
     {
-        return sprintf('%s.%s', $this->getTable()->getName(), $this->getName());
+        return sprintf('%s.%s', $this->getTable(), $this->getName());
     }
 
     public function getName()

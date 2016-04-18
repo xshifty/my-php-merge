@@ -46,18 +46,32 @@ final class AccumulateMergeData implements Action
                     return 'NULL';
                 }
                 return $this->groupConnection->quote($value);
-            }, $this, $this), $row);
+            }, $this), $row);
 
             $this->groupConnection->execute(sprintf(
-                'INSERT INTO myphpmerge_%1$s (myphpmerge_schema, %2$s) VALUES (%4$s, %3$s)',
+                '
+                    INSERT INTO myphpmerge_%1$s (
+                        myphpmerge_schema,
+                        myphpmerge__key__,
+                        %2$s
+                    ) VALUES (
+                        %4$s,
+                        %5$s,
+                        %3$s
+                    )
+                ',
                 $this->mergeRule->table,
                 join(", ", array_keys($row)),
                 join(', ', $values),
-                "'{$this->sourceConnection->getConfig()->schema}'"
+                "'{$this->sourceConnection->getConfig()->schema}'",
+                $values[$this->mergeRule->primaryKey]
             ));
 
             $this->groupConnection->execute(sprintf(
-                'UPDATE myphpmerge_%1$s tbl SET tbl.myphpmerge__key__ = tbl.myphpmerge_%2$s',
+                '
+                    UPDATE myphpmerge_%1$s A
+                    SET A.myphpmerge__key__ = A.%2$s
+                ',
                 $this->mergeRule->table,
                 $this->mergeRule->primaryKey
             ));

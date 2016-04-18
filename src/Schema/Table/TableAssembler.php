@@ -42,7 +42,7 @@ final class TableAssembler
         }, null);
 
         if (!empty($foreignKey)) {
-            $columnForeignKey = new ForeignKey($table, $column);
+            $columnForeignKey = new ForeignKey($table->getName(), $column);
             $columnForeignKey->setParentTable($foreignKey['reference']);
             $columnForeignKey->setParentColumn($foreignKey['foreign_key']);
 

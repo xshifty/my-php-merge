@@ -6,7 +6,7 @@ use \Xshifty\MyPhpMerge\Schema\MysqlConnection;
 use \Xshifty\MyPhpMerge\Schema\Table\TableBase;
 use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
 
-final class UpdateKeys implements Action
+final class UpdatePrimaryKeys implements Action
 {
     private $table;
     private $sourceConnection;
@@ -29,15 +29,7 @@ final class UpdateKeys implements Action
     public function execute()
     {
         echo '.';
-        $rule = $this->ruleContainer->getRule(
-            $this->table->getName()
-        );
 
-        $this->updatePrimaryKeys();
-    }
-
-    public function updatePrimaryKeys()
-    {
         $where = '';
         $unique = $this->ruleContainer->getRule($this->table->getName())->unique;
 
@@ -49,27 +41,32 @@ final class UpdateKeys implements Action
         foreach ($unique as $column) {
             $where[] = "{$column} = A.{$column}";
         }
-        $where = 'WHERE ' . implode(' AND ', $where);
+        $where = 'WHERE B.' . implode(' AND B.', $where);
 
         $this->groupConnection->execute(sprintf(
             'CREATE TEMPORARY TABLE temp_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
             $this->table->getName()
         ));
 
-        $this->groupConnection->execute(sprintf(
+        $sql = sprintf(
             '
                 UPDATE myphpmerge_%1$s A
                 SET A.myphpmerge__key__ = (
-                    SELECT myphpmerge_%2$s FROM temp_myphpmerge_%1$s
+                    SELECT myphpmerge__key__
+                    FROM temp_myphpmerge_%1$s B
                     %3$s
-                    ORDER BY myphpmerge_%2$s
+                    GROUP BY B.%4$s
+                    ORDER BY B.myphpmerge_%2$s
                     LIMIT 1
                 )
             ',
             $this->table->getName(),
             $this->table->getPrimaryKey()->getName(),
-            $where
-        ));
+            $where,
+            implode(', B.', $this->ruleContainer->getRule($this->table->getName())->unique)
+        );
+
+        $this->groupConnection->execute($sql);
 
         $this->groupConnection->execute(sprintf(
             'DROP TEMPORARY TABLE temp_myphpmerge_%1$s',

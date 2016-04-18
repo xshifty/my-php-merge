@@ -60,12 +60,12 @@ final class MoveMergeData implements Action
         });
 
         $accumColumnsName = array_map(function ($row) use ($columnsPrimaryKey, $accumPrimaryKey) {
-            if (in_array($row, ['myphpmerge_schema', 'myphpmerge__key__'])) {
+            if (in_array($row, ['myphpmerge_schema', $accumPrimaryKey['Field']])) {
                 return null;
             }
 
-            return $accumPrimaryKey['Field'] == $row
-                ? "{$accumPrimaryKey['Field']} AS '{$columnsPrimaryKey['Field']}'" : $row;
+            return 'myphpmerge__key__' == $row
+                ? "myphpmerge__key__ AS '{$columnsPrimaryKey['Field']}'" : $row;
         }, $accumColumnsName);
         $accumColumnsName = array_filter($accumColumnsName);
 
