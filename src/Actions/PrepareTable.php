@@ -48,10 +48,11 @@ final class PrepareTable implements Action
             ));
         }
 
-        $this->groupConnection->execute(sprintf(
+        $createSql = sprintf(
             'CREATE TABLE myphpmerge_%1$s (SELECT * FROM %1$s)',
             $this->mergeRule->table
-        ));
+        );
+        $this->groupConnection->execute($createSql);
 
         if (!$this->groupConnection->hasTable('myphpmerge_' . $this->mergeRule->table)) {
             throw new \RuntimeException("Can't be possible create transitional table for table {$rule->table}");
