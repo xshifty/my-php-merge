@@ -66,7 +66,7 @@ final class UpdatePrimaryKeys implements Action
             implode(', B.', $this->ruleContainer->getRule($this->table->getName())->unique)
         );
 
-        $this->groupConnection->execute(sprintf('DROP TABLE IF EXISTS temp_myphpmerge_%1$s', $this->table->getName()));
         $this->groupConnection->execute($sql);
+        $this->groupConnection->execute(sprintf('DROP TABLE IF EXISTS temp_myphpmerge_%1$s', $this->table->getName()));
     }
 }
