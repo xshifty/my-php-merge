@@ -70,7 +70,13 @@ final class MoveMergeData implements Action
         $accumColumnsName = array_filter($accumColumnsName);
 
         $sql = sprintf(
-            'REPLACE INTO %1$s (%2$s) (SELECT %3$s FROM myphpmerge_%1$s %4$s ORDER BY myphpmerge__key__)',
+            '
+                REPLACE INTO %1$s (%2$s) (
+                    SELECT      %3$s
+                    FROM        myphpmerge_%1$s %4$s
+                    ORDER BY    LPAD(myphpmerge__key__, 10, "0") ASC
+                )
+            ',
             $this->mergeRule->table,
             implode(', ', $columnsName),
             implode(', ', $accumColumnsName),

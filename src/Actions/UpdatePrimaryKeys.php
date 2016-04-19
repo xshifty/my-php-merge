@@ -39,12 +39,12 @@ final class UpdatePrimaryKeys implements Action
 
         $where = [];
         foreach ($unique as $column) {
-            $where[] = "{$column} = A.{$column}";
+            $where[] = "IF(ISNULL(A.{$column}), ISNULL(B.{$column}), B.{$column} = A.{$column})";
         }
-        $where = 'WHERE B.' . implode(' AND B.', $where);
+        $where = 'WHERE ' . implode(PHP_EOL . ' AND ', $where);
 
         $this->groupConnection->execute(sprintf(
-            'CREATE TEMPORARY TABLE temp_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
+            'CREATE TABLE IF NOT EXISTS temp_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
             $this->table->getName()
         ));
 
@@ -67,10 +67,6 @@ final class UpdatePrimaryKeys implements Action
         );
 
         $this->groupConnection->execute($sql);
-
-        $this->groupConnection->execute(sprintf(
-            'DROP TEMPORARY TABLE temp_myphpmerge_%1$s',
-            $this->table->getName()
-        ));
+        $this->groupConnection->execute(sprintf('DROP TABLE IF EXISTS temp_myphpmerge_%1$s', $this->table->getName()));
     }
 }
