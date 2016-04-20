@@ -67,13 +67,15 @@ final class AccumulateMergeData implements Action
                 $values[$this->mergeRule->primaryKey]
             ));
 
+            $primaryKeyPrefix = count($this->mergeRule->unique) < 1 ? 'myphpmerge_' : '';
+
             $this->groupConnection->execute(sprintf(
                 '
                     UPDATE myphpmerge_%1$s A
                     SET A.myphpmerge__key__ = A.%2$s
                 ',
                 $this->mergeRule->table,
-                $this->mergeRule->primaryKey
+                $primaryKeyPrefix . $this->mergeRule->primaryKey
             ));
         }
     }

@@ -57,4 +57,15 @@ abstract class TableBase
             return false;
         });
     }
+
+    public function getColumn($columnName)
+    {
+        return array_reduce($this->columns->getArrayCopy(), function ($first, $current) use ($columnName) {
+            if ($current->getName() == $columnName) {
+                return $current;
+            }
+
+            return $first;
+        });
+    }
 }

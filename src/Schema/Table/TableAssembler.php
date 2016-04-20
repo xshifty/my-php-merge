@@ -15,26 +15,24 @@ final class TableAssembler
 
     public function assembly(Rule $mergeRule)
     {
-        $columns = array_map(function ($row) {
-            return $row['Field'];
-        }, $mergeRule->getTableColumns());
+        $columns = $mergeRule->getTableColumns();
         $table = new Table($mergeRule->table);
 
         foreach ($columns as $column) {
-            $this->bindColumn($mergeRule, $table, $column);
+            $this->bindColumn($mergeRule, $table, $column['Field'], $column['Type']);
         }
 
         return $table;
     }
 
-    private function bindColumn(Rule $mergeRule, TableBase $table, $column)
+    private function bindColumn(Rule $mergeRule, TableBase $table, $columnName, $columnType)
     {
-        if (!empty($mergeRule->primaryKey) && $mergeRule->primaryKey == $column) {
-            return $table->addColumn(new PrimaryKey($table, $column));
+        if (!empty($mergeRule->primaryKey) && $mergeRule->primaryKey == $columnName) {
+            return $table->addColumn(new PrimaryKey($table, $columnName, $columnType));
         }
 
-        $foreignKey = array_reduce($mergeRule->foreignKeys, function ($initial, $current) use ($column) {
-            if ($current['key'] == $column) {
+        $foreignKey = array_reduce($mergeRule->foreignKeys, function ($initial, $current) use ($columnName) {
+            if ($current['key'] == $columnName) {
                 $initial = $current;
             }
 
@@ -42,11 +40,13 @@ final class TableAssembler
         }, null);
 
         if (!empty($foreignKey)) {
-            $columnForeignKey = new ForeignKey($table->getName(), $column);
+            $columnForeignKey = new ForeignKey($table->getName(), $columnName, $columnType);
             $columnForeignKey->setParentTable($foreignKey['reference']);
             $columnForeignKey->setParentColumn($foreignKey['foreign_key']);
 
             return $table->addColumn($columnForeignKey);
         }
+
+        $table->addColumn(new Column($table->getName(), $columnName, $columnType));
     }
 }
