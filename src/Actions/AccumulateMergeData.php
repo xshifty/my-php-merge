@@ -30,7 +30,7 @@ final class AccumulateMergeData implements Action
         }, $columnsDescription);
 
         $querySql = sprintf(
-            'SELECT %1$s FROM %2$s',
+            'SELECT %1$s FROM `%2$s`',
             join(', ', $columnsName),
             $this->mergeRule->table
         );
@@ -50,9 +50,9 @@ final class AccumulateMergeData implements Action
 
             $this->groupConnection->execute(sprintf(
                 '
-                    INSERT INTO myphpmerge_%1$s (
-                        myphpmerge_schema,
-                        myphpmerge__key__,
+                    INSERT INTO `myphpmerge_%1$s` (
+                        `myphpmerge_schema`,
+                        `myphpmerge__key__`,
                         %2$s
                     ) VALUES (
                         %4$s,
@@ -71,8 +71,8 @@ final class AccumulateMergeData implements Action
 
             $this->groupConnection->execute(sprintf(
                 '
-                    UPDATE myphpmerge_%1$s A
-                    SET A.myphpmerge__key__ = A.%2$s
+                    UPDATE `myphpmerge_%1$s` A
+                    SET A.`myphpmerge__key__` = A.%2$s
                 ',
                 $this->mergeRule->table,
                 $primaryKeyPrefix . $this->mergeRule->primaryKey

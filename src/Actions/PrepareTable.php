@@ -25,12 +25,12 @@ final class PrepareTable implements Action
     {
         echo '.';
         $this->groupConnection->execute(sprintf(
-            'DROP TABLE IF EXISTS %s',
+            'DROP TABLE IF EXISTS `%s`',
             $this->mergeRule->table
         ));
 
         $this->groupConnection->execute(sprintf(
-            'DROP TABLE IF EXISTS myphpmerge_%s',
+            'DROP TABLE IF EXISTS `myphpmerge_%s`',
             $this->mergeRule->table
         ));
 
@@ -49,7 +49,7 @@ final class PrepareTable implements Action
         }
 
         $createSql = sprintf(
-            'CREATE TABLE myphpmerge_%1$s (SELECT * FROM %1$s)',
+            'CREATE TABLE `myphpmerge_%1$s` (SELECT * FROM `%1$s`)',
             $this->mergeRule->table
         );
         $this->groupConnection->execute($createSql);
@@ -59,11 +59,11 @@ final class PrepareTable implements Action
         }
 
         $alterSql = sprintf('
-            ALTER TABLE myphpmerge_%1$s
-                ADD COLUMN myphpmerge_schema VARCHAR(50) FIRST,
-                ADD COLUMN myphpmerge__key__ VARCHAR(1000) FIRST,
-                ADD COLUMN myphpmerge_%2$s BIGINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
-                ADD PRIMARY KEY (myphpmerge_%2$s)
+            ALTER TABLE `myphpmerge_%1$s`
+                ADD COLUMN `myphpmerge_schema` VARCHAR(50) FIRST,
+                ADD COLUMN `myphpmerge__key__` VARCHAR(1000) FIRST,
+                ADD COLUMN `myphpmerge_%2$s` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
+                ADD PRIMARY KEY (`myphpmerge_%2$s`)
             ',
             $this->mergeRule->table,
             $this->mergeRule->primaryKey
