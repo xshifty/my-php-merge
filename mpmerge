@@ -32,13 +32,13 @@ use \Xshifty\MyPhpMerge\Output as Out;
 
 Out::setup();
 
-#try {
+try {
     $mergeFile = 'Mergefile.json';
     $console = new \Xshifty\MyPhpMerge\Tools\Console($mergeFile, $argv);
     $console->setup();
     $console->run();
-#} catch (\RuntimeException $re) {
-#    Out::writeln('<warning>WARN: ' . $re->getMessage() . '(' . $re->getFile() . ':' . $re->getLine() . ')' . '</warning>');
-#} catch (\Exception $e) {
-#    Out::writeln('<error>ERR: ' . $e->getMessage() . '</error>');
-#}
+} catch (\RuntimeException $re) {
+    Out::writeln('<warning>WARN: ' . $re->getMessage() . '(' . $re->getFile() . ':' . $re->getLine() . ')' . '</warning>');
+} catch (\Exception $e) {
+    Out::writeln('<error>ERR: ' . $e->getMessage() . '</error>');
+}
