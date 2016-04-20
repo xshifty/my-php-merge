@@ -105,7 +105,7 @@ final class MysqlConnectionPDO implements MysqlConnection
             throw new \RuntimeException("Can't copy table, {$this->config['schema']} is readonly.");
         }
 
-        $createTable = $from->query('SHOW CREATE TABLE ' . $tableName);
+        $createTable = $from->query("SHOW CREATE TABLE `{$tableName}`");
         if (!empty($createTable[0])) {
             $createTable = array_values($createTable[0]);
             $sql = $createTable[1];

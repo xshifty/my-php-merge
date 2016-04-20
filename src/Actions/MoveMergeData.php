@@ -71,10 +71,10 @@ final class MoveMergeData implements Action
 
         $sql = sprintf(
             '
-                REPLACE INTO %1$s (%2$s) (
+                REPLACE INTO `%1$s` (%2$s) (
                     SELECT      %3$s
-                    FROM        myphpmerge_%1$s %4$s
-                    ORDER BY    LPAD(myphpmerge__key__, 10, "0") ASC
+                    FROM        `myphpmerge_%1$s` %4$s
+                    ORDER BY    LPAD(`myphpmerge__key__`, 10, "0") ASC
                 )
             ',
             $this->mergeRule->table,

@@ -37,25 +37,36 @@ final class UpdatePrimaryKeys implements Action
             return true;
         }
 
+        $this->groupConnection->execute(sprintf(
+            'CREATE TABLE IF NOT EXISTS temp_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
+            $this->table->getName()
+        ));
+
         $where = [];
         foreach ($unique as $column) {
             $where[] = "IF(ISNULL(A.{$column}), ISNULL(B.{$column}), B.{$column} = A.{$column})";
         }
         $where = 'WHERE ' . implode(PHP_EOL . ' AND ', $where);
 
-        $this->groupConnection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS temp_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
-            $this->table->getName()
-        ));
+        $group = 'GROUP BY B.' . implode(
+            ', B.',
+            $this->ruleContainer->getRule($this->table->getName())->unique
+        );
+
+
+
+        $pkey = $this->table->getPrimaryKey();
+        $keyReplace = $pkey->getType() != 'INTEGER'
+            ? 'myphpmerge__key__' : 'myphpmerge_' . $pkey->getName();
 
         $sql = sprintf(
             '
                 UPDATE myphpmerge_%1$s A
                 SET A.myphpmerge__key__ = (
-                    SELECT myphpmerge__key__
+                    SELECT %5$s
                     FROM temp_myphpmerge_%1$s B
                     %3$s
-                    GROUP BY B.%4$s
+                    %4$s
                     ORDER BY B.myphpmerge_%2$s
                     LIMIT 1
                 )
@@ -63,7 +74,8 @@ final class UpdatePrimaryKeys implements Action
             $this->table->getName(),
             $this->table->getPrimaryKey()->getName(),
             $where,
-            implode(', B.', $this->ruleContainer->getRule($this->table->getName())->unique)
+            $group,
+            $keyReplace
         );
 
         $this->groupConnection->execute($sql);

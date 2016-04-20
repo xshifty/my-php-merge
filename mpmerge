@@ -38,7 +38,7 @@ try {
     $console->setup();
     $console->run();
 } catch (\RuntimeException $re) {
-    Out::writeln('<warning>WARN: ' . $re->getMessage() . '</warning>');
+    Out::writeln('<warning>WARN: ' . $re->getMessage() . '(' . $re->getFile() . ':' . $re->getLine() . ')' . '</warning>');
 } catch (\Exception $e) {
     Out::writeln('<error>ERR: ' . $e->getMessage() . '</error>');
 }

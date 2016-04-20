@@ -23,6 +23,6 @@ abstract class MergeRule implements Rule
 
     public function getTableColumns()
     {
-        return $this->templateConnection->query('DESCRIBE ' . $this->table);
+        return $this->templateConnection->query("DESCRIBE `{$this->table}`");
     }
 }
