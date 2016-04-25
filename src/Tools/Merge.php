@@ -17,6 +17,7 @@ final class Merge
     private $templateConnection;
     private $groupConnection;
     private $tableAssembler;
+    private $tables = [];
 
     public function __construct($config, RuleContainer $ruleContainer)
     {
@@ -28,6 +29,10 @@ final class Merge
     public function setup()
     {
         $this->loadConnections();
+
+        if (!empty($this->config->tables) && count($this->config->tables)) {
+            $this->tables = $this->config->tables;
+        }
     }
 
     public function run()
@@ -73,10 +78,7 @@ final class Merge
         );
 
         foreach ($this->config->schemas->source as $source) {
-            array_push(
-                $this->sourceConnections,
-                new MysqlConnectionPDO((array) $source)
-            );
+            $this->sourceConnections[$source->schema] = new MysqlConnectionPDO((array) $source);
         }
 
         if (!$this->groupConnection->schemaExists()) {
@@ -117,15 +119,41 @@ final class Merge
 
     private function accumulateMergeData(Rule $rule)
     {
-        $this->foreachSourceConnection(\Closure::bind(function ($sourceConnection) use ($rule) {
-            $accumulateAction = new \Xshifty\MyPhpMerge\Actions\AccumulateMergeData(
-                $rule,
-                $sourceConnection,
-                $this->groupConnection
-            );
+        $tableConfig = array_reduce($this->tables, function ($initial, $current) use ($rule) {
+            if ($current->table == $rule->table) {
+                $initial = $current;
+            }
 
-            $accumulateAction->execute();
-        }, $this));
+            return $initial;
+        });
+
+        if (!$tableConfig) {
+            $this->foreachSourceConnection(\Closure::bind(function ($sourceConnection) use ($rule) {
+                $accumulateAction = new \Xshifty\MyPhpMerge\Actions\AccumulateMergeData(
+                    $rule,
+                    $sourceConnection,
+                    $this->groupConnection
+                );
+
+                $accumulateAction->execute();
+            }, $this));
+
+            return;
+        }
+
+        if (!empty($tableConfig->sources)) {
+            array_map(\Closure::bind(function ($customSource) use ($rule) {
+                if (isset($this->sourceConnections[$customSource])) {
+                    $accumulateAction = new \Xshifty\MyPhpMerge\Actions\AccumulateMergeData(
+                            $rule,
+                            $this->sourceConnections[$customSource],
+                            $this->groupConnection
+                    );
+
+                    $accumulateAction->execute();
+                }
+            }, $this), $tableConfig->sources);
+        }
     }
 
     private function updatePrimaryKeys(Rule $rule)

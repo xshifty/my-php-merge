@@ -43,5 +43,11 @@
     },
     "path": {
         "merge-rules": "./rules"
-    }
+    },
+    "tables": [
+        {
+            "table": "sample_table",
+            "sources": ["db_teste1"]
+        }
+    ]
 }
