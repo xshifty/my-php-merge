@@ -55,6 +55,10 @@ final class Merge
         $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
 
+        echo "Applying create rules";
+        $this->foreachRule([$this, 'applyCreateRules']);
+        echo PHP_EOL;
+
         echo "Moving data";
         $this->foreachRule([$this, 'moveMergeData']);
         echo PHP_EOL;
@@ -108,6 +112,10 @@ final class Merge
 
     private function prepareTable($rule)
     {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
         $prepareTableAction = new \Xshifty\MyPhpMerge\Actions\PrepareTable(
             $rule,
             $this->templateConnection,
@@ -119,6 +127,10 @@ final class Merge
 
     private function accumulateMergeData(Rule $rule)
     {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
         $tableConfig = array_reduce($this->tables, function ($initial, $current) use ($rule) {
             if ($current->table == $rule->table) {
                 $initial = $current;
@@ -158,6 +170,10 @@ final class Merge
 
     private function updatePrimaryKeys(Rule $rule)
     {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
         $this->foreachSourceConnection(\Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
             $updatePrimaryKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdatePrimaryKeys(
                 $this->tableAssembler->assembly($rule),
@@ -172,6 +188,10 @@ final class Merge
 
     private function UpdateForeignKeys(Rule $rule)
     {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
         $this->foreachSourceConnection(\Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
             $updateForeignKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdateForeignKeys(
                 $this->tableAssembler->assembly($rule),
@@ -184,8 +204,27 @@ final class Merge
         }, $this));
     }
 
+    private function applyCreateRules(Rule $rule)
+    {
+        if (!in_array(RuleContainer::CREATE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
+        $applyCreateRulesAction = new \Xshifty\MyPhpMerge\Actions\ApplyCreateRules(
+            $rule,
+            $this->groupConnection,
+            $this->config
+        );
+
+        $applyCreateRulesAction->execute();
+    }
+
     private function moveMergeData(Rule $rule)
     {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
         $this->foreachSourceConnection($closure = \Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
             $moveAction = new \Xshifty\MyPhpMerge\Actions\MoveMergeData(
                 $rule,
