@@ -3,15 +3,30 @@ namespace Xshifty\MyPhpMerge\Merge\Rules;
 
 final class RuleContainer extends \SplMaxHeap
 {
+    const RULE_INTERFACE = "Xshifty\MyPhpMerge\Merge\Rules\Rule";
+    const CREATE_INTERFACE = "Xshifty\MyPhpMerge\Merge\Rules\Create";
+    const MERGE_INTERFACE = "Xshifty\MyPhpMerge\Merge\Rules\Merge";
+
     protected function compare($firstRule, $secondRule)
     {
-        $firstRule->priority = empty($firstRule->priority)
-            ? 0 : intval($firstRule->priority);
+        $firstPriority = 0;
+        $secondPriority = 0;
 
-        $secondRule->priority = empty($secondRule->priority)
-            ? 0 : intval($secondRule->priority);
+        if (
+            is_object($firstRule)
+            && in_array(RuleContainer::RULE_INTERFACE, class_implements(get_class($firstRule)))
+        ) {
+            $firstPriority = $firstRule->getPriority();
+        }
 
-        return $firstRule->priority - $secondRule->priority;
+        if (
+            is_object($secondRule)
+            && in_array(RuleContainer::RULE_INTERFACE, class_implements(get_class($secondRule)))
+        ) {
+            $secondPriority = $secondRule->getPriority();
+        }
+
+        return $firstPriority - $secondPriority;
     }
 
     public function getRule($tableName)

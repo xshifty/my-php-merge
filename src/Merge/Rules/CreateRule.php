@@ -3,14 +3,17 @@ namespace Xshifty\MyPhpMerge\Merge\Rules;
 
 use Xshifty\MyPhpMerge\Schema\MysqlConnection;
 
-abstract class MergeRule implements Rule, Merge
+abstract class CreateRule implements Rule, Create
 {
     protected $templateConnection;
+    protected $groupConnection;
+    public $table;
     public $priority = 1;
-    public $foreignKeys = [];
-    public $unique = [];
 
-    public function __construct(MysqlConnection $templateConnection)
+    public function __construct(
+        MysqlConnection $templateConnection,
+        MysqlConnection $groupConnection
+    )
     {
         if (empty($this->table)) {
             $reflection = new \ReflectionClass(get_class($this));
@@ -18,15 +21,11 @@ abstract class MergeRule implements Rule, Merge
         }
 
         $this->templateConnection = $templateConnection;
+        $this->groupConnection = $groupConnection;
     }
 
     public function getPriority()
     {
         return $this->priority;
-    }
-
-    public function getTableColumns()
-    {
-        return $this->templateConnection->query("DESCRIBE `{$this->table}`");
     }
 }

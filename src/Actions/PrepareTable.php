@@ -1,7 +1,7 @@
 <?php
 namespace Xshifty\MyPhpMerge\Actions;
 
-use Xshifty\MyPhpMerge\Merge\Rules\MergeRule;
+use Xshifty\MyPhpMerge\Merge\Rules\Rule;
 use Xshifty\MyPhpMerge\Schema\MysqlConnection;
 
 final class PrepareTable implements Action
@@ -11,7 +11,7 @@ final class PrepareTable implements Action
     private $groupConnection;
 
     public function __construct(
-        MergeRule $mergeRule,
+        Rule $mergeRule,
         MysqlConnection $templateConnection,
         MysqlConnection $groupConnection
     )

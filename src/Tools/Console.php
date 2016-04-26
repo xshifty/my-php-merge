@@ -17,6 +17,7 @@ final class Console implements Tool
     private $rules;
     private $input;
     private $templateConnection;
+    private $groupConnection;
 
     public function __construct($mergeFile = 'Mergefile.json', array $input)
     {
@@ -97,6 +98,10 @@ final class Console implements Tool
         $this->templateConnection = new MysqlConnectionPDO(
             (array) $this->config->schemas->template
         );
+
+        $this->groupConnection = new MysqlConnectionPDO(
+            (array) $this->config->schemas->group
+        );
     }
 
     private function loadRules()
@@ -121,15 +126,19 @@ final class Console implements Tool
 
     private function addRule($class)
     {
-        if (
-            !in_array(
-                'Xshifty\\MyPhpMerge\\Merge\\Rules\\Rule',
-                class_implements($class)
-            )
-        ) {
+        if (!in_array('Xshifty\\MyPhpMerge\\Merge\\Rules\\Rule', class_implements($class))) {
             throw new \RuntimeException("Rule {$class} must implements Xshifty\\MyPhpMerge\\Merge\\Rules\\Rule");
         }
 
-        return $this->rules->insert(new $class($this->templateConnection));
+        if (in_array('Xshifty\\MyPhpMerge\\Merge\\Rules\\Create', class_implements($class))) {
+            return $this->rules->insert(new $class(
+                $this->templateConnection,
+                $this->groupConnection
+            ));
+        }
+
+        return $this->rules->insert(new $class(
+            $this->templateConnection
+        ));
     }
 }

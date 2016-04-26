@@ -3,5 +3,5 @@ namespace Xshifty\MyPhpMerge\Merge\Rules;
 
 interface Rule
 {
-    public function getTableColumns();
+    public function getPriority();
 }
