@@ -55,12 +55,12 @@ final class Merge
         $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
 
-        echo "Applying create rules";
-        $this->foreachRule([$this, 'applyCreateRules']);
-        echo PHP_EOL;
-
         echo "Moving data";
         $this->foreachRule([$this, 'moveMergeData']);
+        echo PHP_EOL;
+
+        echo "Applying create rules";
+        $this->foreachRule([$this, 'applyCreateRules']);
         echo PHP_EOL;
 
         echo "Cleaning residual data";
