@@ -75,7 +75,7 @@ final class MysqlConnectionPDO implements MysqlConnection
 
         $created = $this->schemaExists();
         if (!$created) {
-            $this->execute('CREATE SCHEMA ' . $this->config['schema']);
+            $created = $this->execute('CREATE SCHEMA ' . $this->config['schema']);
         }
 
         if (!$source) {
