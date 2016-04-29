@@ -19,8 +19,15 @@ final class Merge
     private $tableAssembler;
     private $tables = [];
 
-    public function __construct($config, RuleContainer $ruleContainer)
+    public function __construct(
+        MysqlConnection $templateConnection,
+        MysqlConnection $groupConnection,
+        $config,
+        RuleContainer $ruleContainer
+    )
     {
+        $this->templateConnection = $templateConnection;
+        $this->groupConnection = $groupConnection;
         $this->config = $config;
         $this->ruleContainer = $ruleContainer;
         $this->rules = iterator_to_array(clone($ruleContainer));
@@ -62,31 +69,18 @@ final class Merge
         echo "Applying create rules";
         $this->foreachRule([$this, 'applyCreateRules']);
         echo PHP_EOL;
-
+/*
         echo "Cleaning residual data";
         $this->foreachRule([$this, 'cleanUp']);
         echo PHP_EOL;
-
-        $this->groupConnection->execute('SET FOREIGN_KEY_CHECKS:=0');
+*/
+        $this->groupConnection->execute('SET FOREIGN_KEY_CHECKS:=1');
     }
 
     private function loadConnections()
     {
-        $this->templateConnection = new MysqlConnectionPDO(
-            (array) $this->config->schemas->template
-        );
-
-        $this->groupConnection = new MysqlConnectionPDO(
-            (array) $this->config->schemas->group,
-            true
-        );
-
         foreach ($this->config->schemas->source as $source) {
             $this->sourceConnections[$source->schema] = new MysqlConnectionPDO((array) $source);
-        }
-
-        if (!$this->groupConnection->schemaExists()) {
-            $this->groupConnection->createSchema();
         }
 
         if (!$this->tableAssembler) {

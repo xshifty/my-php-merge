@@ -51,7 +51,12 @@ final class Console implements Tool
     public function merge()
     {
         $this->loadRules();
-        $mergeTool = new Merge($this->config, $this->rules);
+        $mergeTool = new Merge(
+            $this->templateConnection,
+            $this->groupConnection,
+            $this->config,
+            $this->rules
+        );
         $mergeTool->setup();
         $mergeTool->run();
     }
@@ -100,7 +105,8 @@ final class Console implements Tool
         );
 
         $this->groupConnection = new MysqlConnectionPDO(
-            (array) $this->config->schemas->group
+            (array) $this->config->schemas->group,
+            true
         );
     }
 
