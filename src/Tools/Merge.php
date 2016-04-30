@@ -69,11 +69,11 @@ final class Merge
         echo "Applying create rules";
         $this->foreachRule([$this, 'applyCreateRules']);
         echo PHP_EOL;
-/*
+
         echo "Cleaning residual data";
         $this->foreachRule([$this, 'cleanUp']);
         echo PHP_EOL;
-*/
+
         $this->groupConnection->execute('SET FOREIGN_KEY_CHECKS:=1');
     }
 
