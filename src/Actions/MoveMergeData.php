@@ -59,13 +59,19 @@ final class MoveMergeData implements Action
             return $columnsPrimaryKey['Field'] == $row ? false : $row;
         });
 
-        $accumColumnsName = array_map(function ($row) use ($columnsPrimaryKey, $accumPrimaryKey) {
+        $unique = !empty($this->mergeRule->unique) ? $this->mergeRule->unique : [];
+        $accumColumnsName = array_map(function ($row) use ($columnsPrimaryKey, $accumPrimaryKey, $unique) {
             if (in_array($row, ['myphpmerge_schema', $accumPrimaryKey['Field']])) {
                 return null;
             }
 
+            $maxRow = $row;
+            if (count($unique)) {
+                $maxRow = "MAX({$row}) AS '{$row}'";
+            }
+
             return 'myphpmerge__key__' == $row
-                ? "myphpmerge__key__ AS '{$columnsPrimaryKey['Field']}'" : $row;
+                ? "myphpmerge__key__ AS '{$columnsPrimaryKey['Field']}'" : $maxRow;
         }, $accumColumnsName);
         $accumColumnsName = array_filter($accumColumnsName);
 
@@ -73,7 +79,8 @@ final class MoveMergeData implements Action
             '
                 REPLACE INTO `%1$s` (%2$s) (
                     SELECT      %3$s
-                    FROM        `myphpmerge_%1$s` %4$s
+                    FROM        `myphpmerge_%1$s`
+                    %4$s
                     ORDER BY    LPAD(`myphpmerge__key__`, 10, "0") ASC
                 )
             ',
