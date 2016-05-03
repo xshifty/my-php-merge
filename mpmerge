@@ -28,9 +28,27 @@ if (!defined('MPMERGE_COMPOSER_INSTALL')) {
 
 include MPMERGE_COMPOSER_INSTALL;
 
-use \Xshifty\MyPhpMerge\Output as Out;
+\Xshifty\MyPhpMerge\Output::setup();
 
-Out::setup();
+if (!function_exists('cprintln')) {
+    function cprintln()
+    {
+        $class = "\\Xshifty\\MyPhpMerge\\Output";
+        $method = "writeln";
+        $args = func_get_args();
+        return call_user_func_array([$class, $method], $args);
+    }
+}
+
+if (!function_exists('cprint')) {
+    function cprint()
+    {
+        $class = "\\Xshifty\\MyPhpMerge\\Output";
+        $method = "write";
+        $args = func_get_args();
+        return call_user_func_array([$class, $method], $args);
+    }
+}
 
 try {
     $mergeFile = 'Mergefile.json';
@@ -38,7 +56,7 @@ try {
     $console->setup();
     $console->run();
 } catch (\RuntimeException $re) {
-    Out::writeln('<warning>WARN: ' . $re->getMessage() . '(' . $re->getFile() . ':' . $re->getLine() . ')' . '</warning>');
+    cprintln('<warning>WARN: ' . $re->getMessage() . '(' . $re->getFile() . ':' . $re->getLine() . ')' . '</warning>');
 } catch (\Exception $e) {
-    Out::writeln('<error>ERR: ' . $e->getMessage() . '</error>');
+    cprintln('<error>ERR: ' . $e->getMessage() . '</error>');
 }

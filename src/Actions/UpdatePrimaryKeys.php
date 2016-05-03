@@ -9,27 +9,22 @@ use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
 final class UpdatePrimaryKeys implements Action
 {
     private $table;
-    private $sourceConnection;
     private $groupConnection;
     private $ruleContainer;
 
     public function __construct(
         TableBase $table,
-        MysqlConnection $sourceConnection,
         MysqlConnection $groupConnection,
         RuleContainer $ruleContainer
     )
     {
         $this->table = $table;
-        $this->sourceConnection = $sourceConnection;
         $this->groupConnection = $groupConnection;
         $this->ruleContainer = $ruleContainer;
     }
 
     public function execute()
     {
-        echo '.';
-
         $where = '';
         $unique = $this->ruleContainer->getRule($this->table->getName())->unique;
 
@@ -38,7 +33,7 @@ final class UpdatePrimaryKeys implements Action
         }
 
         $this->groupConnection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS temp_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
+            'CREATE TABLE IF NOT EXISTS pkey_myphpmerge_%1$s (SELECT * FROM myphpmerge_%1$s)',
             $this->table->getName()
         ));
 
@@ -64,7 +59,7 @@ final class UpdatePrimaryKeys implements Action
                 UPDATE myphpmerge_%1$s A
                 SET A.myphpmerge__key__ = (
                     SELECT %5$s
-                    FROM temp_myphpmerge_%1$s B
+                    FROM pkey_myphpmerge_%1$s B
                     %3$s
                     %4$s
                     ORDER BY B.myphpmerge_%2$s
@@ -78,7 +73,16 @@ final class UpdatePrimaryKeys implements Action
             $keyReplace
         );
 
-        $this->groupConnection->execute($sql);
-        $this->groupConnection->execute(sprintf('DROP TABLE IF EXISTS temp_myphpmerge_%1$s', $this->table->getName()));
+        $updated = $this->groupConnection->execute($sql);
+        $status = '.';
+        if (!$updated) {
+            $status = '<error>!</error>';
+        }
+        cprint($status);
+
+        $this->groupConnection->execute(sprintf(
+            'DROP TABLE IF EXISTS pkey_myphpmerge_%1$s',
+            $this->table->getName()
+        ));
     }
 }
