@@ -46,31 +46,31 @@ final class Merge
     {
         $this->groupConnection->execute('SET FOREIGN_KEY_CHECKS:=0');
 
-        echo "Preparing merge tables";
+        cprint("<info>Preparing merge tables</info>");
         $this->foreachRule([$this, 'prepareTable']);
         echo PHP_EOL;
 
-        echo "Accumulating table data";
+        cprint("<info>Accumulating table data</info>");
         $this->foreachRule([$this, 'accumulateMergeData']);
         echo PHP_EOL;
 
-        echo "Updating primary keys";
+        cprint("<info>Updating primary keys</info>");
         $this->foreachRule([$this, 'updatePrimaryKeys']);
         echo PHP_EOL;
 
-        echo "Updating foreign keys";
+        cprint("<info>Updating foreign keys</info>");
         $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
 
-        echo "Moving data";
+        cprint("<info>Moving data</info>");
         $this->foreachRule([$this, 'moveMergeData']);
         echo PHP_EOL;
 
-        echo "Applying create rules";
+        cprint("<info>Applying create rules</info>");
         $this->foreachRule([$this, 'applyCreateRules']);
         echo PHP_EOL;
 
-        echo "Cleaning residual data";
+        cprint("<info>Cleaning residual data</info>");
         $this->foreachRule([$this, 'cleanUp']);
         echo PHP_EOL;
 
@@ -168,16 +168,13 @@ final class Merge
             return;
         }
 
-        $this->foreachSourceConnection(\Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
-            $updatePrimaryKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdatePrimaryKeys(
-                $this->tableAssembler->assembly($rule),
-                $sourceConnection,
-                $this->groupConnection,
-                $this->ruleContainer
-            );
+        $updatePrimaryKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdatePrimaryKeys(
+            $this->tableAssembler->assembly($rule),
+            $this->groupConnection,
+            $this->ruleContainer
+        );
 
-            $updatePrimaryKeysAction->execute();
-        }, $this));
+        $updatePrimaryKeysAction->execute();
     }
 
     private function UpdateForeignKeys(Rule $rule)
@@ -186,16 +183,13 @@ final class Merge
             return;
         }
 
-        $this->foreachSourceConnection(\Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
-            $updateForeignKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdateForeignKeys(
-                $this->tableAssembler->assembly($rule),
-                $sourceConnection,
-                $this->groupConnection,
-                $this->ruleContainer
-            );
+        $updateForeignKeysAction = new \Xshifty\MyPhpMerge\Actions\UpdateForeignKeys(
+            $this->tableAssembler->assembly($rule),
+            $this->groupConnection,
+            $this->ruleContainer
+        );
 
-            $updateForeignKeysAction->execute();
-        }, $this));
+        $updateForeignKeysAction->execute();
     }
 
     private function applyCreateRules(Rule $rule)
