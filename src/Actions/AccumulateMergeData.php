@@ -14,8 +14,7 @@ final class AccumulateMergeData implements Action
         Rule $mergeRule,
         MysqlConnection $sourceConnection,
         MysqlConnection $groupConnection
-    )
-    {
+    ) {
         $this->mergeRule = $mergeRule;
         $this->sourceConnection = $sourceConnection;
         $this->groupConnection = $groupConnection;
