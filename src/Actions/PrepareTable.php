@@ -14,8 +14,7 @@ final class PrepareTable implements Action
         Rule $mergeRule,
         MysqlConnection $templateConnection,
         MysqlConnection $groupConnection
-    )
-    {
+    ) {
         $this->mergeRule = $mergeRule;
         $this->templateConnection = $templateConnection;
         $this->groupConnection = $groupConnection;

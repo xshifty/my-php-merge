@@ -1,10 +1,9 @@
 <?php
 namespace Xshifty\MyPhpMerge\Actions;
 
-use \Xshifty\MyPhpMerge\Merge\Rules\MergeRule;
+use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
 use \Xshifty\MyPhpMerge\Schema\MysqlConnection;
 use \Xshifty\MyPhpMerge\Schema\Table\TableBase;
-use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
 
 final class UpdatePrimaryKeys implements Action
 {
@@ -16,8 +15,7 @@ final class UpdatePrimaryKeys implements Action
         TableBase $table,
         MysqlConnection $groupConnection,
         RuleContainer $ruleContainer
-    )
-    {
+    ) {
         $this->table = $table;
         $this->groupConnection = $groupConnection;
         $this->ruleContainer = $ruleContainer;
@@ -48,11 +46,9 @@ final class UpdatePrimaryKeys implements Action
             $this->ruleContainer->getRule($this->table->getName())->unique
         );
 
-
-
         $pkey = $this->table->getPrimaryKey();
         $keyReplace = $pkey->getType() != 'INTEGER'
-            ? 'myphpmerge__key__' : 'myphpmerge_' . $pkey->getName();
+        ? 'myphpmerge__key__' : 'myphpmerge_' . $pkey->getName();
 
         $sql = sprintf(
             '

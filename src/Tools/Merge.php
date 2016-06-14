@@ -1,12 +1,11 @@
 <?php
 namespace Xshifty\MyPhpMerge\Tools;
 
+use \Xshifty\MyPhpMerge\Merge\Rules\Rule;
+use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
 use \Xshifty\MyPhpMerge\Schema\MysqlConnection;
 use \Xshifty\MyPhpMerge\Schema\MysqlConnectionPDO;
 use \Xshifty\MyPhpMerge\Schema\Table\TableAssembler;
-use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
-use \Xshifty\MyPhpMerge\Merge\Rules\Rule;
-
 
 final class Merge
 {
@@ -24,13 +23,12 @@ final class Merge
         MysqlConnection $groupConnection,
         $config,
         RuleContainer $ruleContainer
-    )
-    {
+    ) {
         $this->templateConnection = $templateConnection;
         $this->groupConnection = $groupConnection;
         $this->config = $config;
         $this->ruleContainer = $ruleContainer;
-        $this->rules = iterator_to_array(clone($ruleContainer));
+        $this->rules = iterator_to_array(clone ($ruleContainer));
     }
 
     public function setup()
@@ -56,6 +54,10 @@ final class Merge
 
         cprint("<info>Updating primary keys</info>");
         $this->foreachRule([$this, 'updatePrimaryKeys']);
+        echo PHP_EOL;
+
+        cprint("<info>Flatting table data</info>");
+        $this->foreachRule([$this, 'flatDuplicateData']);
         echo PHP_EOL;
 
         cprint("<info>Updating foreign keys</info>");
@@ -151,9 +153,9 @@ final class Merge
             array_map(\Closure::bind(function ($customSource) use ($rule) {
                 if (isset($this->sourceConnections[$customSource])) {
                     $accumulateAction = new \Xshifty\MyPhpMerge\Actions\AccumulateMergeData(
-                            $rule,
-                            $this->sourceConnections[$customSource],
-                            $this->groupConnection
+                        $rule,
+                        $this->sourceConnections[$customSource],
+                        $this->groupConnection
                     );
 
                     $accumulateAction->execute();
@@ -215,6 +217,23 @@ final class Merge
 
         $this->foreachSourceConnection($closure = \Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
             $moveAction = new \Xshifty\MyPhpMerge\Actions\MoveMergeData(
+                $rule,
+                $sourceConnection,
+                $this->groupConnection
+            );
+
+            $moveAction->execute();
+        }, $this, $this));
+    }
+
+    private function flatDuplicateData(Rule $rule)
+    {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
+        $this->foreachSourceConnection($closure = \Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
+            $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateData(
                 $rule,
                 $sourceConnection,
                 $this->groupConnection

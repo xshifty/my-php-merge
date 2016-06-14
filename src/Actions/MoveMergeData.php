@@ -14,8 +14,7 @@ final class MoveMergeData implements Action
         Rule $mergeRule,
         MysqlConnection $sourceConnection,
         MysqlConnection $groupConnection
-    )
-    {
+    ) {
         $this->mergeRule = $mergeRule;
         $this->sourceConnection = $sourceConnection;
         $this->groupConnection = $groupConnection;
@@ -26,53 +25,23 @@ final class MoveMergeData implements Action
         echo '.';
 
         $columnsDescription = $this->mergeRule->getTableColumns();
+
         $columnsName = array_map(function ($row) {
             return $row['Field'];
         }, $columnsDescription);
-        $columnsPrimaryKey = array_reduce($columnsDescription, function ($initial, $current) {
-            if (!empty($initial['Key']) && $initial['Key'] == 'PRI') {
-                return $initial;
-            }
-
-            if (!empty($current['Key']) && $current['Key'] == 'PRI') {
-                $initial = $current;
-                return $initial;
-            }
-        });
 
         $accumColumnsDescription = $this->groupConnection->query("DESCRIBE myphpmerge_{$this->mergeRule->table}");
-        $accumPrimaryKey = array_reduce($accumColumnsDescription, function ($initial, $current) {
-            if (!empty($initial['Key']) && $initial['Key'] == 'PRI') {
-                return $initial;
+
+        $accumColumnsName = array_map(function ($row) use ($columnsName) {
+
+            if ($row['Field'] == 'myphpmerge__key__') {
+                return 'myphpmerge__key__ AS id';
             }
 
-            if (!empty($current['Key']) && $current['Key'] == 'PRI') {
-                $initial = $current;
-                return $initial;
-            }
-        });
-        $accumColumnsName = array_map(function ($row) {
-            return $row['Field'];
+            $inOriginalTable = array_search($row['Field'], $columnsName);
+            return $inOriginalTable ? $row['Field'] : false;
         }, $accumColumnsDescription);
 
-        $accumColumnsName = array_filter($accumColumnsName, function ($row) use ($columnsPrimaryKey) {
-            return $columnsPrimaryKey['Field'] == $row ? false : $row;
-        });
-
-        $unique = !empty($this->mergeRule->unique) ? $this->mergeRule->unique : [];
-        $accumColumnsName = array_map(function ($row) use ($columnsPrimaryKey, $accumPrimaryKey, $unique) {
-            if (in_array($row, ['myphpmerge_schema', $accumPrimaryKey['Field']])) {
-                return null;
-            }
-
-            $maxRow = $row;
-            if (count($unique)) {
-                $maxRow = "MAX({$row}) AS '{$row}'";
-            }
-
-            return 'myphpmerge__key__' == $row
-                ? "myphpmerge__key__ AS '{$columnsPrimaryKey['Field']}'" : $maxRow;
-        }, $accumColumnsName);
         $accumColumnsName = array_filter($accumColumnsName);
 
         $sql = sprintf(
@@ -80,15 +49,12 @@ final class MoveMergeData implements Action
                 REPLACE INTO `%1$s` (%2$s) (
                     SELECT      %3$s
                     FROM        `myphpmerge_%1$s`
-                    %4$s
                     ORDER BY    LPAD(`myphpmerge__key__`, 10, "0") ASC
                 )
             ',
             $this->mergeRule->table,
             implode(', ', $columnsName),
-            implode(', ', $accumColumnsName),
-            !empty($this->mergeRule->unique) && count($this->mergeRule->unique)
-                ? 'GROUP BY ' . implode(', ', $this->mergeRule->unique) : ''
+            implode(', ', $accumColumnsName)
         );
 
         $this->groupConnection->execute($sql);
