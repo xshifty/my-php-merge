@@ -35,9 +35,13 @@ final class UpdateForeignKeys implements Action
         $sql = "UPDATE myphpmerge_{$key->getTable()} A, myphpmerge_{$key->getParentTable()} B
             SET    A.{$key->getName()} = B.myphpmerge__key__
             WHERE  (
-                A.{$key->getName()} LIKE CONCAT('%,',B.{$key->getParentColumn()},',%')
-                OR A.{$key->getName()} LIKE CONCAT(B.{$key->getParentColumn()},',%')
-                OR A.{$key->getName()} LIKE CONCAT('%,',B.{$key->getParentColumn()})
+                REPLACE(B.{$key->getParentColumn()}, ',', '|')
+                REGEXP REPLACE(CONCAT('^', A.{$key->getName()}, '$'), ',', '$|^')
+                OR
+                REPLACE(A.{$key->getName()}, ',', '|')
+                REGEXP REPLACE(CONCAT('^', B.{$key->getParentColumn()}, '$'), ',', '$|^')
+                OR
+                A.{$key->getName()} = B.{$key->getParentColumn()}
             )";
 
         $updated = $this->groupConnection->execute($sql);
