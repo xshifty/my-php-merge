@@ -7,16 +7,13 @@ use Xshifty\MyPhpMerge\Schema\MysqlConnection;
 final class FlatDuplicateData implements Action
 {
     private $mergeRule;
-    private $sourceConnection;
     private $groupConnection;
 
     public function __construct(
         Rule $mergeRule,
-        MysqlConnection $sourceConnection,
         MysqlConnection $groupConnection
     ) {
         $this->mergeRule = $mergeRule;
-        $this->sourceConnection = $sourceConnection;
         $this->groupConnection = $groupConnection;
     }
 
@@ -49,6 +46,7 @@ final class FlatDuplicateData implements Action
         $unique = !empty($this->mergeRule->unique) ? $this->mergeRule->unique : [];
         $foreignKeys = $this->mergeRule->foreignKeys;
         $table = $this->mergeRule->table;
+        $originalAccumColumnsName = $accumColumnsName;
         $accumColumnsName = array_map(function ($row) use ($accumPrimaryKey, $unique, $foreignKeys, $table) {
 
             $maxRow = $row;
@@ -59,8 +57,12 @@ final class FlatDuplicateData implements Action
                 $maxRow = "MAX({$row}) AS '{$row}'";
             }
 
+            if ('myphpmerge_grouped_keys' == $row && $isUnique) {
+                return "@%1\$s := GROUP_CONCAT(DISTINCT myphpmerge__key__) AS myphpmerge_grouped_keys";
+            }
+
             if ('myphpmerge__key__' == $row && $isUnique) {
-                return "GROUP_CONCAT(DISTINCT myphpmerge__key__) AS myphpmerge__key__";
+                return "MIN(myphpmerge__key__) AS myphpmerge__key__";
             }
 
             if ($isForeignKey && $isUnique) {
@@ -72,20 +74,62 @@ final class FlatDuplicateData implements Action
         }, $accumColumnsName);
         $accumColumnsName = array_filter($accumColumnsName);
 
+        $table = $this->mergeRule->table;
+        $accumColumnsNameOriginal = implode(', ', $accumColumnsNameOriginal);
+        $accumColumnsName = implode(', ', $accumColumnsName);
+        $uniques = !empty($this->mergeRule->unique) && count($this->mergeRule->unique)
+        ? 'GROUP BY ' . implode(', ', $this->mergeRule->unique) : '';
+
+        $whereTemplate = '
+                IF (@%1$s, ! (
+                    @%1$s LIKE CONCAT(myphpmerge__key__, \',%%\')
+                    OR @%1$s LIKE CONCAt(\'%%,\', myphpmerge__key__, \',%%\')
+                    OR @%1$s LIKE CONCAT(\'%%,\', myphpmerge__key__)
+                ), 1)';
+
+        $count = count($this->mergeRule->unique) ? ', count(myphpmerge__key__) q' : '';
+        $selectTemplate = '
+                (SELECT %1$s
+                    ' . $count . '
+                    FROM `myphpmerge_%2$s`
+                GROUP BY %%1$s
+                HAVING %%1$s
+                    ' . ($count ? ' AND q > 1 ' : '') . ')';
+
+        $selectTemplate = sprintf($selectTemplate, $accumColumnsName, $table);
+        $sqls = [];
+        $wheres = [];
+
+        array_walk($unique, function ($value) use (
+            &$sqls,
+            &$wheres,
+            $whereTemplate,
+            $selectTemplate
+        ) {
+            array_push($wheres, sprintf($whereTemplate, $value));
+            array_push($sqls, sprintf($selectTemplate, $value));
+
+        });
+
+        $where = $wheres ? ' WHERE' . implode(' AND ', $wheres) : '';
+        array_push($sqls, '
+                (SELECT ' . $accumColumnsName . '
+                    ' . $count . '
+                FROM `myphpmerge_' . $table . '`
+                ' . $where . '
+                ' . $uniques . '
+                ORDER BY LPAD(`myphpmerge__key__`, 10, "0") ASC)');
+
+        $sql = implode(' UNION ', $sqls);
+        $uniques = implode('_', $this->mergeRule->unique);
+        $sql = str_replace('@%1$s :=', '', $sql);
+
         $sql = sprintf(
             '
-            CREATE TABLE `myphpmerge_%1$s_flat` (
-                    SELECT      %3$s
-                    FROM        `myphpmerge_%1$s`
-                    %4$s
-                    ORDER BY    LPAD(`myphpmerge__key__`, 10, "0") ASC
-                )
+            CREATE TABLE `myphpmerge_%1$s_flat` %2$s
             ',
-            $this->mergeRule->table,
-            implode(', ', $accumColumnsNameOriginal),
-            implode(', ', $accumColumnsName),
-            !empty($this->mergeRule->unique) && count($this->mergeRule->unique)
-            ? 'GROUP BY ' . implode(', ', $this->mergeRule->unique) : ''
+            $table,
+            $sql
         );
 
         $this->groupConnection->execute($sql);

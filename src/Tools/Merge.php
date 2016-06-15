@@ -228,19 +228,13 @@ final class Merge
 
     private function flatDuplicateData(Rule $rule)
     {
-        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
-            return;
-        }
 
-        $this->foreachSourceConnection($closure = \Closure::bind(function (MysqlConnection $sourceConnection) use ($rule) {
-            $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateData(
-                $rule,
-                $sourceConnection,
-                $this->groupConnection
-            );
+        $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateData(
+            $rule,
+            $this->groupConnection
+        );
 
-            $moveAction->execute();
-        }, $this, $this));
+        $moveAction->execute();
     }
 
     private function cleanUp(Rule $rule)
