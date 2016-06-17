@@ -57,16 +57,24 @@ final class PrepareTable implements Action
             throw new \RuntimeException("Can't be possible create transitional table for table {$rule->table}");
         }
 
+        $foreignKeysQuery = '';
+        array_walk($this->mergeRule->foreignKeys, function ($row) use (&$foreignKeysQuery) {
+            $foreignKeysQuery .= "CHANGE `{$row['key']}` `{$row['key']}` VARCHAR(255) NULL DEFAULT NULL," . PHP_EOL;
+        }, $this->mergeRule->foreignKeys);
+
         $alterSql = sprintf('
             ALTER TABLE `myphpmerge_%1$s`
                 ADD COLUMN `myphpmerge_schema` VARCHAR(50) FIRST,
                 ADD COLUMN `myphpmerge_grouped_keys` VARCHAR(1000) FIRST,
                 ADD COLUMN `myphpmerge__key__` VARCHAR(1000) FIRST,
                 ADD COLUMN `myphpmerge_%2$s` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
+                CHANGE `%2$s` `%2$s` VARCHAR(255) NULL DEFAULT NULL,
+                %3$s
                 ADD PRIMARY KEY (`myphpmerge_%2$s`)
             ',
             $this->mergeRule->table,
-            $this->mergeRule->primaryKey
+            $this->mergeRule->primaryKey,
+            $foreignKeysQuery
         );
 
         $this->groupConnection->execute($alterSql);

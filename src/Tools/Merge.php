@@ -56,6 +56,10 @@ final class Merge
         $this->foreachRule([$this, 'updatePrimaryKeys']);
         echo PHP_EOL;
 
+        cprint("<info>Preparing foreign keys</info>");
+        $this->foreachRule([$this, 'prepareForeignKeys']);
+        echo PHP_EOL;
+
         cprint("<info>Flatting table data</info>");
         $this->foreachRule([$this, 'flatDuplicateData']);
         echo PHP_EOL;
@@ -192,6 +196,21 @@ final class Merge
         );
 
         $updateForeignKeysAction->execute();
+    }
+
+    private function PrepareForeignKeys(Rule $rule)
+    {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
+        $prepareForeignKeysAction = new \Xshifty\MyPhpMerge\Actions\PrepareForeignKeys(
+            $this->tableAssembler->assembly($rule),
+            $this->groupConnection,
+            $this->ruleContainer
+        );
+
+        $prepareForeignKeysAction->execute();
     }
 
     private function applyCreateRules(Rule $rule)

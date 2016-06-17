@@ -61,6 +61,14 @@ final class FlatDuplicateData implements Action
                 return "@%1\$s := GROUP_CONCAT(DISTINCT myphpmerge__key__) AS myphpmerge_grouped_keys";
             }
 
+            if ('id' == $row && $isUnique) {
+                return "GROUP_CONCAT(DISTINCT id) AS id";
+            }
+
+            if ('myphpmerge_schema' == $row && $isUnique) {
+                return "GROUP_CONCAT(DISTINCT myphpmerge_schema) AS myphpmerge_schema";
+            }
+
             if ('myphpmerge__key__' == $row && $isUnique) {
                 return "MIN(myphpmerge__key__) AS myphpmerge__key__";
             }
