@@ -100,7 +100,7 @@ final class FlatDuplicateData implements Action
                 (SELECT %1$s
                     ' . $count . '
                     FROM `myphpmerge_%2$s`
-                GROUP BY %%1$s
+                ' . $uniques . '
                 HAVING %%1$s
                     ' . ($count ? ' AND q > 1 ' : '') . ')';
 
