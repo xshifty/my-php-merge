@@ -95,12 +95,13 @@ final class FlatDuplicateData implements Action
                     OR @%1$s LIKE CONCAT(\'%%,\', myphpmerge__key__)
                 ), 1)';
 
+        $flatForce = isset($this->mergeRule->flatForce) ? $this->mergeRule->flatForce : false;
         $count = count($this->mergeRule->unique) ? ', count(myphpmerge__key__) q' : '';
         $selectTemplate = '
                 (SELECT %1$s
                     ' . $count . '
                     FROM `myphpmerge_%2$s`
-                ' . $uniques . '
+                ' . ($flatForce ? 'GROUP BY %%1$s' : $uniques) . '
                 HAVING %%1$s
                     ' . ($count ? ' AND q > 1 ' : '') . ')';
 
