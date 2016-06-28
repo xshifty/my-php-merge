@@ -68,6 +68,14 @@ final class Merge
         $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
 
+        cprint("<info>Flatting table data</info>");
+        $this->foreachRule([$this, 'flatDuplicateDataSecondFactor']);
+        echo PHP_EOL;
+
+        cprint("<info>Updating foreign keys</info>");
+        $this->foreachRule([$this, 'updateForeignKeys']);
+        echo PHP_EOL;
+
         cprint("<info>Moving data</info>");
         $this->foreachRule([$this, 'moveMergeData']);
         echo PHP_EOL;
@@ -249,6 +257,17 @@ final class Merge
     {
 
         $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateData(
+            $rule,
+            $this->groupConnection
+        );
+
+        $moveAction->execute();
+    }
+
+    private function flatDuplicateDataSecondFactor(Rule $rule)
+    {
+
+        $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateDataSecondFactor(
             $rule,
             $this->groupConnection
         );

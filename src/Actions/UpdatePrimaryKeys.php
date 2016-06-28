@@ -53,23 +53,14 @@ final class UpdatePrimaryKeys implements Action
         $sql = sprintf(
             '
                 UPDATE myphpmerge_%1$s A
-                SET A.myphpmerge__key__ = (
-                    SELECT %5$s
-                    FROM pkey_myphpmerge_%1$s B
-                    %3$s
-                    %4$s
-                    ORDER BY B.myphpmerge_%2$s
-                    LIMIT 1
-                )
+                SET A.myphpmerge__key__ = A.%2$s
             ',
             $this->table->getName(),
-            $this->table->getPrimaryKey()->getName(),
-            $where,
-            $group,
             $keyReplace
         );
 
         $updated = $this->groupConnection->execute($sql);
+
         $status = '.';
         if (!$updated) {
             $status = '<error>!</error>';
