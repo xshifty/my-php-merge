@@ -88,10 +88,8 @@ final class FlatDuplicateDataSecondFactor implements Action
         $uniques = !empty($this->mergeRule->unique) && count($this->mergeRule->unique)
         ? 'GROUP BY ' . implode(', ', $this->mergeRule->unique) : '';
 
-        $count = count($this->mergeRule->unique) ? ', count(myphpmerge__key__) qq' : '';
         $sql = '
                 (SELECT ' . $accumColumnsName . '
-                    ' . $count . '
                 FROM `myphpmerge_' . $table . '`
                 ' . $uniques . '
                 ORDER BY LPAD(`myphpmerge__key__`, 10, "0") ASC)';

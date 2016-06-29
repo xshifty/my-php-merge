@@ -76,6 +76,17 @@ final class Merge
         $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
 
+        $countTables = count($this->config->schemas->source);
+        for ($i = 0; $i <= $countTables; $i++) {
+            cprint("<info>Flatting table data</info>");
+            $this->foreachRule([$this, 'flatDuplicateDataSecondFactor']);
+            echo PHP_EOL;
+
+            cprint("<info>Updating foreign keys</info>");
+            $this->foreachRule([$this, 'updateForeignKeys']);
+            echo PHP_EOL;
+        }
+
         cprint("<info>Moving data</info>");
         $this->foreachRule([$this, 'moveMergeData']);
         echo PHP_EOL;
