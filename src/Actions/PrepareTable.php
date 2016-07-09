@@ -14,8 +14,7 @@ final class PrepareTable implements Action
         Rule $mergeRule,
         MysqlConnection $templateConnection,
         MysqlConnection $groupConnection
-    )
-    {
+    ) {
         $this->mergeRule = $mergeRule;
         $this->templateConnection = $templateConnection;
         $this->groupConnection = $groupConnection;
@@ -58,15 +57,36 @@ final class PrepareTable implements Action
             throw new \RuntimeException("Can't be possible create transitional table for table {$rule->table}");
         }
 
-        $alterSql = sprintf('
+        $foreignKeysQuery = '';
+        array_walk($this->mergeRule->foreignKeys, function ($row) use (&$foreignKeysQuery) {
+            $foreignKeysQuery .= ",CHANGE `{$row['key']}` `{$row['key']}` VARCHAR(255) NULL DEFAULT NULL" . PHP_EOL;
+        }, $this->mergeRule->foreignKeys);
+
+        $primaryKeyColumn = 'ADD COLUMN `myphpmerge_' . $this->mergeRule->primaryKey . '` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,';
+        $autoIncrement = isset($this->mergeRule->autoIncrement)
+        ? $this->mergeRule->autoIncrement
+        : true
+        ;
+        if (!$autoIncrement) {
+            $primaryKeyColumn = 'ADD COLUMN `myphpmerge_' . $this->mergeRule->primaryKey . '` VARCHAR(255) FIRST,';
+        }
+
+        $alterSqlTemplate = '
             ALTER TABLE `myphpmerge_%1$s`
                 ADD COLUMN `myphpmerge_schema` VARCHAR(50) FIRST,
+                ADD COLUMN `myphpmerge_grouped_keys` VARCHAR(1000) FIRST,
                 ADD COLUMN `myphpmerge__key__` VARCHAR(1000) FIRST,
-                ADD COLUMN `myphpmerge_%2$s` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
-                ADD PRIMARY KEY (`myphpmerge_%2$s`)
-            ',
+                %4$s
+                CHANGE `%2$s` `%2$s` VARCHAR(255) NULL DEFAULT NULL
+                %3$s
+                ' . ($autoIncrement ? ',ADD PRIMARY KEY (`myphpmerge_%2$s`)' : '') . '
+            ';
+
+        $alterSql = sprintf($alterSqlTemplate,
             $this->mergeRule->table,
-            $this->mergeRule->primaryKey
+            $this->mergeRule->primaryKey,
+            $foreignKeysQuery,
+            $primaryKeyColumn
         );
 
         $this->groupConnection->execute($alterSql);

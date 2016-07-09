@@ -1,12 +1,11 @@
 <?php
 namespace Xshifty\MyPhpMerge\Tools;
 
+use \Xshifty\MyPhpMerge\Merge\Rules\Rule;
+use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
 use \Xshifty\MyPhpMerge\Schema\MysqlConnection;
 use \Xshifty\MyPhpMerge\Schema\MysqlConnectionPDO;
 use \Xshifty\MyPhpMerge\Schema\Table\TableAssembler;
-use \Xshifty\MyPhpMerge\Merge\Rules\RuleContainer;
-use \Xshifty\MyPhpMerge\Merge\Rules\Rule;
-
 
 final class Merge
 {
@@ -24,13 +23,12 @@ final class Merge
         MysqlConnection $groupConnection,
         $config,
         RuleContainer $ruleContainer
-    )
-    {
+    ) {
         $this->templateConnection = $templateConnection;
         $this->groupConnection = $groupConnection;
         $this->config = $config;
         $this->ruleContainer = $ruleContainer;
-        $this->rules = iterator_to_array(clone($ruleContainer));
+        $this->rules = iterator_to_array(clone ($ruleContainer));
     }
 
     public function setup()
@@ -58,9 +56,36 @@ final class Merge
         $this->foreachRule([$this, 'updatePrimaryKeys']);
         echo PHP_EOL;
 
+        cprint("<info>Preparing foreign keys</info>");
+        $this->foreachRule([$this, 'prepareForeignKeys']);
+        echo PHP_EOL;
+
+        cprint("<info>Flatting table data</info>");
+        $this->foreachRule([$this, 'flatDuplicateData']);
+        echo PHP_EOL;
+
         cprint("<info>Updating foreign keys</info>");
         $this->foreachRule([$this, 'updateForeignKeys']);
         echo PHP_EOL;
+
+        cprint("<info>Flatting table data</info>");
+        $this->foreachRule([$this, 'flatDuplicateDataSecondFactor']);
+        echo PHP_EOL;
+
+        cprint("<info>Updating foreign keys</info>");
+        $this->foreachRule([$this, 'updateForeignKeys']);
+        echo PHP_EOL;
+
+        $countTables = count($this->config->schemas->source);
+        for ($i = 0; $i <= $countTables; $i++) {
+            cprint("<info>Flatting table data</info>");
+            $this->foreachRule([$this, 'flatDuplicateDataSecondFactor']);
+            echo PHP_EOL;
+
+            cprint("<info>Updating foreign keys</info>");
+            $this->foreachRule([$this, 'updateForeignKeys']);
+            echo PHP_EOL;
+        }
 
         cprint("<info>Moving data</info>");
         $this->foreachRule([$this, 'moveMergeData']);
@@ -151,9 +176,9 @@ final class Merge
             array_map(\Closure::bind(function ($customSource) use ($rule) {
                 if (isset($this->sourceConnections[$customSource])) {
                     $accumulateAction = new \Xshifty\MyPhpMerge\Actions\AccumulateMergeData(
-                            $rule,
-                            $this->sourceConnections[$customSource],
-                            $this->groupConnection
+                        $rule,
+                        $this->sourceConnections[$customSource],
+                        $this->groupConnection
                     );
 
                     $accumulateAction->execute();
@@ -192,6 +217,21 @@ final class Merge
         $updateForeignKeysAction->execute();
     }
 
+    private function PrepareForeignKeys(Rule $rule)
+    {
+        if (!in_array(RuleContainer::MERGE_INTERFACE, class_implements(get_class($rule)))) {
+            return;
+        }
+
+        $prepareForeignKeysAction = new \Xshifty\MyPhpMerge\Actions\PrepareForeignKeys(
+            $this->tableAssembler->assembly($rule),
+            $this->groupConnection,
+            $this->ruleContainer
+        );
+
+        $prepareForeignKeysAction->execute();
+    }
+
     private function applyCreateRules(Rule $rule)
     {
         if (!in_array(RuleContainer::CREATE_INTERFACE, class_implements(get_class($rule)))) {
@@ -222,6 +262,28 @@ final class Merge
 
             $moveAction->execute();
         }, $this, $this));
+    }
+
+    private function flatDuplicateData(Rule $rule)
+    {
+
+        $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateData(
+            $rule,
+            $this->groupConnection
+        );
+
+        $moveAction->execute();
+    }
+
+    private function flatDuplicateDataSecondFactor(Rule $rule)
+    {
+
+        $moveAction = new \Xshifty\MyPhpMerge\Actions\FlatDuplicateDataSecondFactor(
+            $rule,
+            $this->groupConnection
+        );
+
+        $moveAction->execute();
     }
 
     private function cleanUp(Rule $rule)

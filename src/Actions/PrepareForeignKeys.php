@@ -6,7 +6,7 @@ use \Xshifty\MyPhpMerge\Schema\MysqlConnection;
 use \Xshifty\MyPhpMerge\Schema\Table\ForeignKey;
 use \Xshifty\MyPhpMerge\Schema\Table\TableBase;
 
-final class UpdateForeignKeys implements Action
+final class PrepareForeignKeys implements Action
 {
     private $table;
     private $groupConnection;
@@ -32,23 +32,39 @@ final class UpdateForeignKeys implements Action
 
     private function doUpdate(ForeignKey $key)
     {
-        $sql = "UPDATE myphpmerge_{$key->getTable()} A, myphpmerge_{$key->getParentTable()} B
-            SET    A.{$key->getName()} = B.myphpmerge__key__
-            WHERE  (
-                REPLACE(B.myphpmerge_grouped_keys, ',', '|')
-                REGEXP REPLACE(CONCAT('^', A.{$key->getName()}, '$'), ',', '$|^')
-                OR
-                REPLACE(A.{$key->getName()}, ',', '|')
-                REGEXP REPLACE(CONCAT('^', B.myphpmerge_grouped_keys, '$'), ',', '$|^')
-                OR
-                A.{$key->getName()} = B.myphpmerge__key__
-            )";
-
+        $this->groupConnection->execute(sprintf(
+            'DROP TABLE IF EXISTS fkey_myphpmerge_%1$s',
+            $key->getParentTable()
+        ));
+        $this->groupConnection->execute(sprintf(
+            '
+            CREATE TABLE fkey_myphpmerge_%1$s (
+                SELECT * FROM myphpmerge_%1$s
+            )
+            ',
+            $key->getParentTable()
+        ));
+        $sql = sprintf(
+            '
+                UPDATE  myphpmerge_%1$s A, fkey_myphpmerge_%2$s B
+                SET     A.%3$s = B.myphpmerge__key__
+                WHERE   B.%4$s = A.%3$s
+                AND     A.myphpmerge_schema = B.myphpmerge_schema
+            ',
+            $key->getTable(),
+            $key->getParentTable(),
+            $key->getName(),
+            $key->getParentColumn()
+        );
         $updated = $this->groupConnection->execute($sql);
         $status = '.';
         if (!$updated) {
             $status = '<error>!</error>';
         }
         cprint($status);
+        $this->groupConnection->execute(sprintf(
+            'DROP TABLE fkey_myphpmerge_%1$s',
+            $key->getParentTable()
+        ));
     }
 }
